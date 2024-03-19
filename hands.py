@@ -10,7 +10,8 @@ import hand_tracking as htm
 live = cv2.VideoCapture(0)
 
 screen = screeninfo.get_monitors()[0]
-screen_width, screen_height = screen.width, screen.height
+screen_dims = (1000, 2000, 1)
+screen_width, screen_height = 2000, 2000
 
 tracker = htm.HandTracker()
 
@@ -29,7 +30,7 @@ new_frame_time = 0
 image_canvas = None
 xp =0
 yp=0
-
+curr_col = np.array([255,255,255])
 while True:
     ret, img = live.read(0)
     if not ret:
@@ -46,6 +47,7 @@ while True:
     lms, img, left, right = tracker.track_hands(img, left, right, draw=True)
     # print(lms)
     right_mode = "None"
+    left_mode = "None"
     if "right" in lms:
         # lms = lms["right"]
         fingers = tracker.find_mode()
@@ -56,6 +58,15 @@ while True:
         else:
             right_mode = "Idle mode"
 
+    if "left" in lms:
+        fingers = tracker.find_mode()
+        if sum(fingers)==1 and fingers[1]:
+            left_mode = "Selection mode"
+        elif sum(fingers)==2 and fingers[1]&fingers[2]:
+            left_mode = "Eraser"
+        else:
+            left_mode = "Idle mode"
+
     new_frame_time = time.time()
     fps = 1/(new_frame_time-prev_frame_time)
     prev_frame_time = new_frame_time
@@ -65,9 +76,12 @@ while True:
     cv2.putText(right, f"{fps} {right_mode}", (7, 300), cv2.FONT_HERSHEY_SIMPLEX, 3, (100, 255, 0), 3, cv2.LINE_AA)
 
 
-    screen_height, screen_width, _ = img.shape
+    screen_height, screen_width, _ = screen_dims
 
     left = cv2.resize(left, (screen_width//2, screen_height))
+    imm = cv2.imread("paint.png")
+    left[:200, :1000] = imm
+    left[210:, :1000] = curr_col
     right = cv2.resize(right, (screen_width//2, screen_height))
     image_canvas = cv2.resize(image_canvas, (screen_width//2, screen_height))
 
@@ -78,14 +92,23 @@ while True:
         y = int(y* (screen_height))
         if right_mode=="Drawing mode":
             cv2.circle(right, (x, y), 13, (255, 0, 255), cv2.FILLED)
-            cv2.line(right, (xp,yp),(x,y),color= (255, 0, 255), thickness=6)
-            cv2.line(image_canvas, (xp,yp),(x,y),color= (255, 0, 255), thickness=6)
+            print(type(curr_col))
+            cv2.line(right, (xp,yp),(x,y),color = curr_col.tolist(), thickness=6)
+            cv2.line(image_canvas, (xp,yp),(x,y),color= curr_col.tolist(), thickness=6)
         elif right_mode=="Eraser":
-            cv2.circle(right, (x, y), 13, (0, 0, 0), cv2.FILLED)
-            cv2.line(right, (xp,yp),(x,y),color= (0, 0, 0), thickness = 20)
-            cv2.line(image_canvas, (xp,yp),(x,y),color= (0, 0, 0), thickness = 20)
-
+            cv2.circle(right, (x, y), 27, (0, 0, 0), cv2.FILLED)
+            cv2.line(right, (xp,yp),(x,y),color= (0, 0, 0), thickness = 80)
+            cv2.line(image_canvas, (xp,yp),(x,y),color= (0, 0, 0), thickness = 80)
         xp , yp = x, y
+
+    elif len(lms)>0 and lms["left"]:
+        x, y = lms["left"][8][1:]
+        x = int(x * (screen_width//2))
+        y = int(y* (screen_height))
+        if left_mode=="Selection mode":
+            # cv2.circle(left, (x, y), 13, (255, 0, 255), cv2.FILLED)
+            print("COLOR : ", left[y][x], "CURR : ", x, y)
+            curr_col = left[y][x]
 
     img_gray = cv2.cvtColor(image_canvas, cv2.COLOR_BGR2GRAY)
     _, imginv= cv2.threshold(img_gray, 50, 255, cv2.THRESH_BINARY_INV)

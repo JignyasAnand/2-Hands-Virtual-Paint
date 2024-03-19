@@ -40,7 +40,7 @@ class HandTracker:
                     self.lms["right"] = self.finger_positions(mh_lms[0])
                     self.lms["left"] = None
                 else:
-                    self.draw_landmarks([mh_lms[0]], left)
+                    # self.draw_landmarks([mh_lms[0]], left)
                     self.lms["left"] = self.finger_positions(mh_lms[0])
                     self.lms["right"] = None
         return self.lms, img, left, right
@@ -68,4 +68,10 @@ class HandTracker:
             for i in range(1,5):
                 if (self.lms["right"][self.finger_tip_id[i]][2] < self.lms["right"][self.finger_tip_id[i] - 2][2]):
                     fingers[i] = 1
+
+        elif self.lms and self.lms["left"]:
+            for i in range(1,5):
+                if (self.lms["left"][self.finger_tip_id[i]][2] < self.lms["left"][self.finger_tip_id[i] - 2][2]):
+                    fingers[i] = 1
+        # print(fingers)
         return fingers
