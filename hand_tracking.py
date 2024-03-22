@@ -42,6 +42,7 @@ class HandTracker:
                 else:
                     # self.draw_landmarks([mh_lms[0]], left)
                     self.lms["left"] = self.finger_positions(mh_lms[0])
+                    
                     self.lms["right"] = None
         return self.lms, img, left, right
 
