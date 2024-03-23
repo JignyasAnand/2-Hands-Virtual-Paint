@@ -4,7 +4,10 @@ import numpy as np
 import time
 import screeninfo
 import hand_tracking as htm
-
+scr = screeninfo.get_monitors()[0]
+scr_width = scr.width 
+scr_height = scr.height
+# print(scr_width, scr_height)
 
 def wrap_text(text, font, max_width):
     lines = []
@@ -72,7 +75,7 @@ while True:
 
 
     left = np.zeros_like(img)
-    imm = cv2.imread("paint2.png")
+    imm = cv2.imread("paint3.png")
     left[:200, :] = imm
     left[210:, :] = curr_col
     # right = np.zeros_like(img)
@@ -118,7 +121,6 @@ while True:
 
     right = cv2.resize(right, (screen_width//2, screen_height))
     image_canvas = cv2.resize(image_canvas, (screen_width//2, screen_height))
-
     # x, y = 0,0
     if len(lms)>0 and lms["right"]:
         x, y = lms["right"][8][1:]
@@ -143,6 +145,7 @@ while True:
             cv2.circle(left, (x, y), 13, (255, 0, 255), 8)
             try:
                 print("COLOR : ", left[y][x], "CURR : ", x, y)
+                # if left[y][x]!= [  0   0 255]
                 curr_col = left[y][x]
             except:
                 pass
